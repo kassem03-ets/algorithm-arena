@@ -70,6 +70,19 @@ function runSearch(
   }
 }
 
+function algorithmLabel(algorithm: Algorithm): string {
+  switch (algorithm) {
+    case "A*":
+      return "A* Search";
+    case "BFS":
+      return "Breadth-First Search";
+    case "DFS":
+      return "Depth-First Search";
+    case "Dijkstra":
+      return "Dijkstra";
+  }
+}
+
 function AlgorithmSelect({
                            value,
                            onChange,
@@ -83,18 +96,14 @@ function AlgorithmSelect({
       <select
           value={value}
           disabled={disabled}
-          onChange={e => onChange(e.target.value as Algorithm)}
+          onChange={e =>
+              onChange(e.target.value as Algorithm)
+          }
           className="h-11 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-white outline-none focus:border-indigo-500 disabled:opacity-50"
       >
         {ALGORITHMS.map(item => (
             <option key={item} value={item}>
-              {item === "A*"
-                  ? "A* Search"
-                  : item === "BFS"
-                      ? "Breadth-First Search"
-                      : item === "DFS"
-                          ? "Depth-First Search"
-                          : "Dijkstra"}
+              {algorithmLabel(item)}
             </option>
         ))}
       </select>
@@ -120,38 +129,43 @@ function Grid({
       <div className="w-full overflow-x-auto">
         <div
             className={`mx-auto grid w-full ${
-                compact ? "max-w-[700px]" : "max-w-[1050px]"
+                compact
+                    ? "max-w-[700px]"
+                    : "max-w-[1050px]"
             }`}
             style={{
               gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
               gap: compact ? "2px" : "3px"
             }}
         >
-          {Array.from({ length: ROWS * COLS }, (_, index) => {
-            const color =
-                index === START
-                    ? "bg-emerald-400"
-                    : index === TARGET
-                        ? "bg-rose-400"
-                        : walls.has(index)
-                            ? "bg-slate-500"
-                            : path.has(index)
-                                ? "bg-amber-400"
-                                : visited.has(index)
-                                    ? "bg-cyan-600"
-                                    : "bg-slate-800 hover:bg-slate-700";
+          {Array.from(
+              { length: ROWS * COLS },
+              (_, index) => {
+                const color =
+                    index === START
+                        ? "bg-emerald-400"
+                        : index === TARGET
+                            ? "bg-rose-400"
+                            : walls.has(index)
+                                ? "bg-slate-500"
+                                : path.has(index)
+                                    ? "bg-amber-400"
+                                    : visited.has(index)
+                                        ? "bg-cyan-600"
+                                        : "bg-slate-800 hover:bg-slate-700";
 
-            return (
-                <button
-                    key={index}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onCellClick(index)}
-                    aria-label={`Grid cell ${index}`}
-                    className={`aspect-square min-w-0 rounded-[2px] ${color}`}
-                />
-            );
-          })}
+                return (
+                    <button
+                        key={index}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onCellClick(index)}
+                        aria-label={`Grid cell ${index}`}
+                        className={`aspect-square min-w-0 rounded-[2px] ${color}`}
+                    />
+                );
+              }
+          )}
         </div>
       </div>
   );
@@ -166,7 +180,10 @@ function StatCard({
 }) {
   return (
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-xs text-slate-400">
+          {label}
+        </p>
+
         <p className="mt-2 text-xl font-bold text-white">
           {value}
         </p>
@@ -176,22 +193,79 @@ function StatCard({
 
 function GridLegend() {
   const items = [
-    { label: "Start", color: "bg-emerald-400" },
-    { label: "Target", color: "bg-rose-400" },
-    { label: "Wall", color: "bg-slate-500" },
-    { label: "Visited", color: "bg-cyan-600" },
-    { label: "Path", color: "bg-amber-400" }
+    {
+      label: "Start",
+      color: "bg-emerald-400"
+    },
+    {
+      label: "Target",
+      color: "bg-rose-400"
+    },
+    {
+      label: "Wall",
+      color: "bg-slate-500"
+    },
+    {
+      label: "Visited",
+      color: "bg-cyan-600"
+    },
+    {
+      label: "Path",
+      color: "bg-amber-400"
+    }
   ];
 
   return (
       <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-slate-400">
         {items.map(item => (
-            <div key={item.label} className="flex items-center gap-2">
-              <span className={`h-3 w-3 rounded-[2px] ${item.color}`} />
+            <div
+                key={item.label}
+                className="flex items-center gap-2"
+            >
+          <span
+              className={`h-3 w-3 rounded-[2px] ${item.color}`}
+          />
               <span>{item.label}</span>
             </div>
         ))}
       </div>
+  );
+}
+
+function SearchProgress({
+                          algorithm,
+                          state
+                        }: {
+  algorithm: Algorithm;
+  state: RaceState;
+}) {
+  const total =
+      state.result?.visitedOrder.length ?? 0;
+
+  const progress =
+      total > 0
+          ? Math.min(100, (state.explored / total) * 100)
+          : 0;
+
+  return (
+      <>
+        <div className="mb-4 flex items-center justify-between gap-3 text-xs text-slate-400">
+          <span>{algorithmLabel(algorithm)}</span>
+
+          <span className="tabular-nums">
+          {state.explored} / {total} nodes
+        </span>
+        </div>
+
+        <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+          <div
+              className="h-full bg-emerald-500 transition-[width] duration-150"
+              style={{
+                width: `${progress}%`
+              }}
+          />
+        </div>
+      </>
   );
 }
 
@@ -219,6 +293,7 @@ function RacePanel({
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
               {title}
             </p>
+
             <p className="mt-1 text-sm text-slate-400">
               {state.status}
             </p>
@@ -233,6 +308,11 @@ function RacePanel({
           </div>
         </div>
 
+        <SearchProgress
+            algorithm={algorithm}
+            state={state}
+        />
+
         <div className="rounded-xl border border-slate-800 bg-slate-950 p-3">
           <Grid
               walls={walls}
@@ -245,7 +325,11 @@ function RacePanel({
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-3">
-          <StatCard label="Explored" value={state.explored} />
+          <StatCard
+              label="Explored"
+              value={state.explored}
+          />
+
           <StatCard
               label="Path Length"
               value={
@@ -256,6 +340,7 @@ function RacePanel({
                     : "—"
               }
           />
+
           <StatCard
               label="Compute Time"
               value={
@@ -287,11 +372,13 @@ function RaceResults({
 
   const leftFound = left.path.length > 0;
   const rightFound = right.path.length > 0;
+
   const leftNodes = left.visitedOrder.length;
   const rightNodes = right.visitedOrder.length;
 
   let winner = "Tie";
-  let explanation = "Both explored the same number of nodes.";
+  let explanation =
+      "Both explored the same number of nodes.";
 
   if (leftFound && !rightFound) {
     winner = leftAlgorithm;
@@ -304,10 +391,12 @@ function RaceResults({
     explanation = "Neither algorithm found a path.";
   } else if (leftNodes < rightNodes) {
     winner = leftAlgorithm;
-    explanation = `${leftNodes} nodes explored vs. ${rightNodes}.`;
+    explanation =
+        `${leftNodes} nodes explored vs. ${rightNodes}.`;
   } else if (rightNodes < leftNodes) {
     winner = rightAlgorithm;
-    explanation = `${rightNodes} nodes explored vs. ${leftNodes}.`;
+    explanation =
+        `${rightNodes} nodes explored vs. ${leftNodes}.`;
   }
 
   return (
@@ -315,16 +404,20 @@ function RaceResults({
         <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
           Search Efficiency Winner
         </p>
+
         <h3 className="mt-2 text-2xl font-bold">
           {winner === "Tie" || winner === "No winner"
               ? winner
               : `${winner} wins!`}
         </h3>
+
         <p className="mt-2 text-sm text-slate-400">
           {explanation}
         </p>
+
         <p className="mt-3 text-xs text-slate-500">
-          Winner determined by nodes explored, not animation speed.
+          Winner determined by nodes explored,
+          not animation speed.
         </p>
       </section>
   );
@@ -343,9 +436,12 @@ function BenchmarkPanel({
 }) {
   const [leftBenchmark, setLeftBenchmark] =
       useState<BenchmarkResult | null>(null);
+
   const [rightBenchmark, setRightBenchmark] =
       useState<BenchmarkResult | null>(null);
-  const [benchmarking, setBenchmarking] = useState(false);
+
+  const [benchmarking, setBenchmarking] =
+      useState(false);
 
   useEffect(() => {
     setLeftBenchmark(null);
@@ -364,6 +460,7 @@ function BenchmarkPanel({
             100,
             10
         );
+
         const right = benchmark(
             () => runSearch(rightAlgorithm, walls),
             100,
@@ -380,9 +477,11 @@ function BenchmarkPanel({
 
   const fastest =
       leftBenchmark && rightBenchmark
-          ? leftBenchmark.medianMs < rightBenchmark.medianMs
+          ? leftBenchmark.medianMs <
+          rightBenchmark.medianMs
               ? leftAlgorithm
-              : rightBenchmark.medianMs < leftBenchmark.medianMs
+              : rightBenchmark.medianMs <
+              leftBenchmark.medianMs
                   ? rightAlgorithm
                   : "Tie"
           : null;
@@ -393,7 +492,9 @@ function BenchmarkPanel({
         <span className="text-xs transition-transform group-open:rotate-90">
           ▶
         </span>
+
           Performance Benchmark
+
           <span className="ml-2 text-xs font-normal text-slate-400">
           Optional
         </span>
@@ -404,12 +505,15 @@ function BenchmarkPanel({
             <p className="text-sm text-slate-400">
               Compare median execution times over repeated runs.
             </p>
+
             <button
                 onClick={runBenchmark}
                 disabled={disabled || benchmarking}
                 className="h-11 rounded-lg bg-indigo-600 px-5 font-semibold hover:bg-indigo-500 disabled:opacity-50"
             >
-              {benchmarking ? "Benchmarking..." : "Run Benchmark"}
+              {benchmarking
+                  ? "Benchmarking..."
+                  : "Run Benchmark"}
             </button>
           </div>
 
@@ -417,34 +521,60 @@ function BenchmarkPanel({
               <>
                 <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {[
-                    { name: leftAlgorithm, data: leftBenchmark },
-                    { name: rightAlgorithm, data: rightBenchmark }
+                    {
+                      name: leftAlgorithm,
+                      data: leftBenchmark
+                    },
+                    {
+                      name: rightAlgorithm,
+                      data: rightBenchmark
+                    }
                   ].map((item, index) => (
                       <div
                           key={index}
                           className="rounded-xl border border-slate-700 bg-slate-800 p-5"
                       >
-                        <h4 className="font-bold">{item.name}</h4>
+                        <h4 className="font-bold">
+                          {item.name}
+                        </h4>
+
                         <p className="mt-3 text-xs text-slate-400">
                           Median Execution
                         </p>
+
                         <p className="mt-1 text-2xl font-bold text-emerald-400">
                           {item.data.medianMs.toFixed(4)} ms
                         </p>
+
                         <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
                           <div>
-                            <p className="text-slate-400">Mean</p>
-                            <p>{item.data.meanMs.toFixed(4)} ms</p>
+                            <p className="text-slate-400">
+                              Mean
+                            </p>
+                            <p>
+                              {item.data.meanMs.toFixed(4)} ms
+                            </p>
                           </div>
+
                           <div>
-                            <p className="text-slate-400">Min</p>
-                            <p>{item.data.minMs.toFixed(4)} ms</p>
+                            <p className="text-slate-400">
+                              Min
+                            </p>
+                            <p>
+                              {item.data.minMs.toFixed(4)} ms
+                            </p>
                           </div>
+
                           <div>
-                            <p className="text-slate-400">Max</p>
-                            <p>{item.data.maxMs.toFixed(4)} ms</p>
+                            <p className="text-slate-400">
+                              Max
+                            </p>
+                            <p>
+                              {item.data.maxMs.toFixed(4)} ms
+                            </p>
                           </div>
                         </div>
+
                         <p className="mt-3 text-xs text-slate-500">
                           {item.data.runs.toLocaleString()} runs
                         </p>
@@ -464,34 +594,48 @@ function BenchmarkPanel({
 }
 
 export default function Home() {
-  const [arena, setArena] = useState<Arena>("pathfinding");
-  const [mode, setMode] = useState<Mode>("single");
+  const [arena, setArena] =
+      useState<Arena>("pathfinding");
+
+  const [mode, setMode] =
+      useState<Mode>("single");
 
   const [algorithm, setAlgorithm] =
       useState<Algorithm>("A*");
+
   const [leftAlgorithm, setLeftAlgorithm] =
       useState<Algorithm>("BFS");
+
   const [rightAlgorithm, setRightAlgorithm] =
       useState<Algorithm>("A*");
 
   const [mazeType, setMazeType] =
       useState<MazeType>("random");
+
   const [density, setDensity] = useState(25);
   const [speed, setSpeed] = useState(10);
 
-  const [walls, setWalls] = useState<Set<number>>(new Set());
+  const [walls, setWalls] =
+      useState<Set<number>>(new Set());
 
   const [singleState, setSingleState] =
       useState<RaceState>(emptyRaceState);
+
   const [leftState, setLeftState] =
       useState<RaceState>(emptyRaceState);
+
   const [rightState, setRightState] =
       useState<RaceState>(emptyRaceState);
 
-  const [isRunning, setIsRunning] = useState(false);
-  const [raceComplete, setRaceComplete] = useState(false);
+  const [isRunning, setIsRunning] =
+      useState(false);
 
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [raceComplete, setRaceComplete] =
+      useState(false);
+
+  const timers =
+      useRef<ReturnType<typeof setTimeout>[]>([]);
+
   const runId = useRef(0);
 
   useEffect(() => {
@@ -519,7 +663,11 @@ export default function Home() {
   }
 
   function toggleWall(index: number) {
-    if (isRunning || index === START || index === TARGET) {
+    if (
+        isRunning ||
+        index === START ||
+        index === TARGET
+    ) {
       return;
     }
 
@@ -540,6 +688,7 @@ export default function Home() {
 
   function clearWalls() {
     if (isRunning) return;
+
     setWalls(new Set());
     resetVisualization();
   }
@@ -595,7 +744,8 @@ export default function Home() {
       }, index * speed, currentRun);
     });
 
-    const pathStart = result.visitedOrder.length * speed;
+    const pathStart =
+        result.visitedOrder.length * speed;
 
     result.path.forEach((cell, index) => {
       schedule(() => {
@@ -607,14 +757,16 @@ export default function Home() {
       }, pathStart + index * 30, currentRun);
     });
 
-    const duration = pathStart + result.path.length * 30;
+    const duration =
+        pathStart + result.path.length * 30;
 
     schedule(() => {
       setter(previous => ({
         ...previous,
-        status: result.path.length > 0
-            ? "Path found!"
-            : "No path found"
+        status:
+            result.path.length > 0
+                ? "Path found!"
+                : "No path found"
       }));
     }, duration, currentRun);
 
@@ -623,10 +775,16 @@ export default function Home() {
 
   function measureSearch(selected: Algorithm) {
     const startTime = performance.now();
-    const result = runSearch(selected, walls);
-    const computationMs = performance.now() - startTime;
 
-    return { result, computationMs };
+    const result = runSearch(selected, walls);
+
+    const computationMs =
+        performance.now() - startTime;
+
+    return {
+      result,
+      computationMs
+    };
   }
 
   function visualize() {
@@ -686,6 +844,7 @@ export default function Home() {
 
   function changeArena(nextArena: Arena) {
     if (nextArena === arena) return;
+
     resetVisualization();
     setArena(nextArena);
   }
@@ -698,11 +857,14 @@ export default function Home() {
             <p className="text-sm font-semibold tracking-widest text-emerald-400">
               INTERACTIVE ALGORITHM LAB
             </p>
+
             <h1 className="mt-3 text-4xl font-bold md:text-5xl">
               Algorithm Arena
             </h1>
+
             <p className="mt-3 text-slate-400">
-              Visualize, compare, and understand algorithms in real time.
+              Visualize, compare, and understand algorithms
+              in real time.
             </p>
           </header>
 
@@ -718,6 +880,7 @@ export default function Home() {
             >
               Pathfinding Arena
             </button>
+
             <button
                 onClick={() => changeArena("sorting")}
                 className={`h-12 rounded-xl px-6 font-semibold ${
@@ -739,6 +902,7 @@ export default function Home() {
                       <h2 className="text-2xl font-bold">
                         Pathfinding Arena
                       </h2>
+
                       <p className="mt-1 text-sm text-slate-400">
                         Explore how algorithms navigate a grid.
                       </p>
@@ -755,6 +919,7 @@ export default function Home() {
                       >
                         Single Mode
                       </button>
+
                       <button
                           onClick={() => changeMode("race")}
                           className={`rounded-lg px-5 py-2.5 text-sm font-semibold ${
@@ -775,6 +940,7 @@ export default function Home() {
                           <label className="mb-2 block text-xs font-medium text-slate-400">
                             Algorithm
                           </label>
+
                           <AlgorithmSelect
                               value={algorithm}
                               disabled={isRunning}
@@ -822,7 +988,7 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Aligned advanced settings */}
+                  {/* Advanced settings */}
                   <details className="group mt-5 border-t border-slate-800 pt-4">
                     <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-slate-400 hover:text-white [&::-webkit-details-marker]:hidden">
                   <span className="inline-block text-xs transition-transform group-open:rotate-90">
@@ -836,11 +1002,14 @@ export default function Home() {
                         <label className="mb-3 block text-sm text-slate-400">
                           Maze Type
                         </label>
+
                         <select
                             value={mazeType}
                             disabled={isRunning}
                             onChange={e =>
-                                setMazeType(e.target.value as MazeType)
+                                setMazeType(
+                                    e.target.value as MazeType
+                                )
                             }
                             className="h-11 w-full max-w-64 rounded-lg border border-slate-700 bg-slate-800 px-3 text-white"
                         >
@@ -851,6 +1020,7 @@ export default function Home() {
                             Recursive Backtracking
                           </option>
                         </select>
+
                         <p className="mt-1 text-xs text-slate-500">
                           How obstacles are generated
                         </p>
@@ -860,18 +1030,23 @@ export default function Home() {
                         <label className="mb-3 block text-sm text-slate-400">
                           Wall Density: {density}%
                         </label>
+
                         <input
                             type="range"
                             min="10"
                             max="45"
                             step="5"
                             value={density}
-                            disabled={isRunning || mazeType !== "random"}
+                            disabled={
+                                isRunning ||
+                                mazeType !== "random"
+                            }
                             onChange={e =>
                                 setDensity(Number(e.target.value))
                             }
                             className="h-11 w-full max-w-64 accent-indigo-500 disabled:opacity-40"
                         />
+
                         <p className="mt-1 text-xs text-slate-500">
                           {mazeType === "random"
                               ? "Percentage of blocked cells"
@@ -883,6 +1058,7 @@ export default function Home() {
                         <label className="mb-3 block text-sm text-slate-400">
                           Animation Speed
                         </label>
+
                         <input
                             type="range"
                             min="1"
@@ -890,10 +1066,13 @@ export default function Home() {
                             value={51 - speed}
                             disabled={isRunning}
                             onChange={e =>
-                                setSpeed(51 - Number(e.target.value))
+                                setSpeed(
+                                    51 - Number(e.target.value)
+                                )
                             }
                             className="h-11 w-full max-w-64 accent-emerald-500"
                         />
+
                         <div className="flex w-full max-w-64 justify-between text-xs text-slate-500">
                           <span>Slow</span>
                           <span>Fast</span>
@@ -911,11 +1090,19 @@ export default function Home() {
                           <h3 className="text-lg font-semibold">
                             Visualization
                           </h3>
+
                           <p className="text-sm text-emerald-400">
                             {singleState.status}
                           </p>
                         </div>
 
+                        {/* Matching algorithm / progress row */}
+                        <SearchProgress
+                            algorithm={algorithm}
+                            state={singleState}
+                        />
+
+                        {/* Grid */}
                         <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                           <Grid
                               walls={walls}
@@ -931,11 +1118,13 @@ export default function Home() {
                         </div>
                       </section>
 
+                      {/* Statistics */}
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <StatCard
                             label="Nodes Explored"
                             value={singleState.explored}
                         />
+
                         <StatCard
                             label="Path Length"
                             value={
@@ -946,6 +1135,7 @@ export default function Home() {
                                   : "—"
                             }
                         />
+
                         <StatCard
                             label="Computation Time"
                             value={
@@ -974,6 +1164,7 @@ export default function Home() {
                             isRunning={isRunning}
                             onCellClick={toggleWall}
                         />
+
                         <RacePanel
                             title="Competitor 2"
                             algorithm={rightAlgorithm}
