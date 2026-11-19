@@ -129,14 +129,23 @@ export default function SortingArena() {
     const delayRef = useRef(stepDelay);
     delayRef.current = stepDelay;
 
+
+
     useEffect(() => {
+        const currentRunId = runId;
+        const currentTimer = timer;
+
         return () => {
-            runId.current++;
-            if (timer.current !== null) {
-                clearTimeout(timer.current);
+            currentRunId.current++;
+
+            if (currentTimer.current !== null) {
+                clearTimeout(currentTimer.current);
+                currentTimer.current = null;
             }
         };
     }, []);
+
+
 
     function clearTimer() {
         if (timer.current !== null) {

@@ -429,11 +429,7 @@ function BenchmarkPanel({
 
     const [benchmarking, setBenchmarking] =
         useState(false);
-
-    useEffect(() => {
-        setLeftBenchmark(null);
-        setRightBenchmark(null);
-    }, [leftAlgorithm, rightAlgorithm, walls]);
+    
 
     function runBenchmark() {
         if (disabled || benchmarking) return;
@@ -626,9 +622,13 @@ export default function Home() {
     const runId = useRef(0);
 
     useEffect(() => {
+        const currentRunId = runId;
+        const currentTimers = timers;
+
         return () => {
-            runId.current++;
-            timers.current.forEach(clearTimeout);
+            currentRunId.current++;
+            currentTimers.current.forEach(clearTimeout);
+            currentTimers.current = [];
         };
     }, []);
 

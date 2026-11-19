@@ -349,15 +349,21 @@ export default function SearchingArena() {
     const delayRef = useRef(delay);
     delayRef.current = delay;
 
-    useEffect(() => {
-        return () => {
-            runId.current++;
 
-            if (timer.current !== null) {
-                clearTimeout(timer.current);
+    useEffect(() => {
+        const currentRunId = runId;
+        const currentTimer = timer;
+
+        return () => {
+            currentRunId.current++;
+
+            if (currentTimer.current !== null) {
+                clearTimeout(currentTimer.current);
+                currentTimer.current = null;
             }
         };
     }, []);
+
 
     function clearTimer() {
         if (timer.current !== null) {
