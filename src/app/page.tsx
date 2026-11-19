@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +16,7 @@ import SearchingArena from "@/components/SearchingArena";
 
 type Algorithm = "A*" | "Dijkstra" | "BFS" | "DFS";
 type Mode = "single" | "race";
-type Arena = "pathfinding" | "sorting" | "searching";
+type Arena = "home" | "pathfinding" | "sorting" | "searching";
 
 type SearchResult = {
     visitedOrder: number[];
@@ -70,6 +69,14 @@ function runSearch(
         case "A*":
             return astar(ROWS, COLS, START, TARGET, walls);
     }
+}
+
+function measureSearch(selected: Algorithm, walls: Set<number>) {
+    const startTime = performance.now();
+    const result = runSearch(selected, walls);
+    const computationMs = performance.now() - startTime;
+
+    return { result, computationMs };
 }
 
 function algorithmLabel(algorithm: Algorithm): string {
@@ -131,10 +138,10 @@ function Grid({
         <div className="w-full overflow-x-auto">
             <div
                 className={`mx-auto grid w-full ${
-                    compact
-                        ? "max-w-[700px]"
-                        : "max-w-[1050px]"
-                }`}
+    compact
+        ? "max-w-[700px]"
+        : "max-w-[1050px]"
+}`}
                 style={{
                     gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
                     gap: compact ? "2px" : "3px"
@@ -576,9 +583,112 @@ function BenchmarkPanel({
     );
 }
 
+function HomeDashboard({ onOpen }: { onOpen: (arena: Arena) => void }) {
+    const cards = [
+        {
+            id: "pathfinding" as const,
+            number: "01",
+            title: "Pathfinding",
+            description: "Watch graph algorithms explore a grid, navigate obstacles, and discover routes.",
+            algorithms: "A* · Dijkstra · BFS · DFS",
+            accent: "text-emerald-400",
+            border: "hover:border-emerald-500/60",
+            symbol: "↗"
+        },
+        {
+            id: "sorting" as const,
+            number: "02",
+            title: "Sorting",
+            description: "See how different strategies organize data, step by step.",
+            algorithms: "Bubble · Quick · Merge · Heap",
+            accent: "text-sky-400",
+            border: "hover:border-sky-500/60",
+            symbol: "▥"
+        },
+        {
+            id: "searching" as const,
+            number: "03",
+            title: "String Searching",
+            description: "Explore pattern matching in text, including clever ways to skip unnecessary comparisons.",
+            algorithms: "Naive · KMP · Boyer–Moore · Rabin–Karp",
+            accent: "text-violet-400",
+            border: "hover:border-violet-500/60",
+            symbol: "⌕"
+        }
+    ];
+
+    return (
+        <div className="space-y-7">
+            <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 px-6 py-12 md:px-12 md:py-16">
+                <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-36 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+                <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 left-1/3 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+                <div className="relative max-w-3xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-400">Learn by seeing</p>
+                    <h2 className="mt-5 text-4xl font-bold tracking-tight text-white md:text-6xl">
+                        Algorithms, <span className="text-emerald-400">brought to life.</span>
+                    </h2>
+                    <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400 md:text-lg">
+                        An interactive playground for exploring how algorithms work. Visualize every step, experiment with inputs, and compare approaches side by side.
+                    </p>
+                    <div className="mt-8 flex flex-wrap items-center gap-3">
+                        <button type="button" onClick={() => onOpen("pathfinding")} className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-500">
+                            Explore an arena <span aria-hidden="true">→</span>
+                        </button>
+                        <a href="https://github.com/kassem03-ets/algorithm-arena" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-slate-700 bg-slate-800/70 px-6 py-3 font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800">
+                            View on GitHub <span aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                    <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-800 pt-7">
+                        {[
+                            { value: "3", label: "Interactive arenas" },
+                            { value: "12", label: "Algorithms" },
+                            { value: "2", label: "Visualization modes" }
+                        ].map(stat => (
+                            <div key={stat.label}>
+                                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                                <p className="mt-1 text-xs text-slate-400">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <section aria-labelledby="arenas-heading">
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">Choose your challenge</p>
+                        <h3 id="arenas-heading" className="mt-2 text-2xl font-bold text-white">Explore the arenas</h3>
+                    </div>
+                    <p className="text-sm text-slate-500">Select an arena to get started</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                    {cards.map(card => (
+                        <button key={card.id} type="button" onClick={() => onOpen(card.id)} className={`group flex min-h-64 flex-col rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left transition duration-200 hover:-translate-y-1 hover:bg-slate-800/80 ${card.border}`}>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold tracking-widest text-slate-500">ARENA {card.number}</span>
+                                <span aria-hidden="true" className={`text-3xl ${card.accent}`}>{card.symbol}</span>
+                            </div>
+                            <h4 className="mt-7 text-xl font-bold text-white">{card.title}</h4>
+                            <p className="mt-3 flex-1 text-sm leading-6 text-slate-400">{card.description}</p>
+                            <p className="mt-5 text-xs leading-5 text-slate-500">{card.algorithms}</p>
+                            <div className={`mt-5 text-sm font-semibold ${card.accent}`}>Open arena <span className="inline-block transition-transform group-hover:translate-x-1">→</span></div>
+                        </button>
+                    ))}
+                </div>
+            </section>
+            <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 md:p-8">
+                <h3 className="text-lg font-semibold text-white">Experiment. Visualize. Compare.</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-400">
+                    Customize inputs, adjust animation speed, and use Race Mode to compare algorithms on the same problem. Pathfinding also includes maze generation and an optional performance benchmark.
+                </p>
+            </section>
+        </div>
+    );
+}
+
 export default function Home() {
     const [arena, setArena] =
-        useState<Arena>("pathfinding");
+        useState<Arena>("home");
 
     const [mode, setMode] =
         useState<Mode>("single");
@@ -760,20 +870,6 @@ export default function Home() {
         return duration;
     }
 
-    function measureSearch(selected: Algorithm) {
-        const startTime = performance.now();
-
-        const result = runSearch(selected, walls);
-
-        const computationMs =
-            performance.now() - startTime;
-
-        return {
-            result,
-            computationMs
-        };
-    }
-
     function visualize() {
         if (isRunning) return;
 
@@ -783,7 +879,7 @@ export default function Home() {
         const currentRun = runId.current;
 
         if (mode === "single") {
-            const search = measureSearch(algorithm);
+            const search = measureSearch(algorithm, walls);
 
             const duration = animateResult(
                 search.result,
@@ -801,8 +897,8 @@ export default function Home() {
             return;
         }
 
-        const left = measureSearch(leftAlgorithm);
-        const right = measureSearch(rightAlgorithm);
+        const left = measureSearch(leftAlgorithm, walls);
+        const right = measureSearch(rightAlgorithm, walls);
 
         const leftDuration = animateResult(
             left.result,
@@ -856,42 +952,32 @@ export default function Home() {
                 </header>
 
                 {/* Shared arena navigation */}
-                <nav className="mb-6 flex flex-wrap gap-3">
-                    <button
-                        onClick={() => changeArena("pathfinding")}
-                        className={`h-12 rounded-xl px-6 font-semibold ${
-                            arena === "pathfinding"
-                                ? "bg-indigo-600 text-white"
-                                : "border border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
-                        }`}
-                    >
-                        Pathfinding Arena
-                    </button>
-
-                    <button
-                        onClick={() => changeArena("sorting")}
-                        className={`h-12 rounded-xl px-6 font-semibold ${
-                            arena === "sorting"
-                                ? "bg-indigo-600 text-white"
-                                : "border border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
-                        }`}
-                    >
-                        Sorting Arena
-                    </button>
-
-                    <button
-                        onClick={() => changeArena("searching")}
-                        className={`h-12 rounded-xl px-6 font-semibold ${
-                            arena === "searching"
-                                ? "bg-indigo-600 text-white"
-                                : "border border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
-                        }`}
-                    >
-                        Searching Arena
-                    </button>
+                <nav aria-label="Arena navigation" className="mb-6 flex flex-wrap gap-3">
+                    {([
+                        ["home", "Home"],
+                        ["pathfinding", "Pathfinding Arena"],
+                        ["sorting", "Sorting Arena"],
+                        ["searching", "Searching Arena"]
+                    ] as const).map(([id, label]) => (
+                        <button
+                            key={id}
+                            type="button"
+                            onClick={() => changeArena(id)}
+                            aria-current={arena === id ? "page" : undefined}
+                            className={`h-12 rounded-xl px-5 font-semibold transition ${
+    arena === id
+        ? "bg-indigo-600 text-white"
+        : "border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500 hover:text-white"
+}`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </nav>
 
-                {arena === "pathfinding" ? (
+                {arena === "home" ? (
+                    <HomeDashboard onOpen={changeArena} />
+                ) : arena === "pathfinding" ? (
                     <div className="space-y-5">
                         {/* Unified control card */}
                         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 md:p-6">
@@ -910,10 +996,10 @@ export default function Home() {
                                     <button
                                         onClick={() => changeMode("single")}
                                         className={`rounded-lg px-5 py-2.5 text-sm font-semibold ${
-                                            mode === "single"
-                                                ? "bg-emerald-600 text-white"
-                                                : "text-slate-400 hover:text-white"
-                                        }`}
+    mode === "single"
+        ? "bg-emerald-600 text-white"
+        : "text-slate-400 hover:text-white"
+}`}
                                     >
                                         Single Mode
                                     </button>
@@ -921,10 +1007,10 @@ export default function Home() {
                                     <button
                                         onClick={() => changeMode("race")}
                                         className={`rounded-lg px-5 py-2.5 text-sm font-semibold ${
-                                            mode === "race"
-                                                ? "bg-emerald-600 text-white"
-                                                : "text-slate-400 hover:text-white"
-                                        }`}
+    mode === "race"
+        ? "bg-emerald-600 text-white"
+        : "text-slate-400 hover:text-white"
+}`}
                                     >
                                         Race Mode
                                     </button>
